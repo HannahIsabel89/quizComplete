@@ -2,63 +2,47 @@ const question = document.getElementById('question');
 const choices = Array.from(document.getElementsByClassName("choice-text"));
 const questionCounterText = document.getElementById('questionCounter');
 const scoreText = document.getElementById('score');
-
+const loader = document.getElementById('loader');
+const game = document.getElementById('game');
 let currentQuestion = {};
 let acceptingAnswers = false;
 let score = 0;
 let questionCounter = 0;
 let availableQuestions = [];
 
-let questions = [
-    {
-      "question": "What fruit does Hannah dislike?",
-      "choice1": "Apple",
-      "choice2": "Banana",
-      "choice3": "Kiwi",
-      "choice4": "Mango",
-      "answer": 2
-    },
-    {
-      "question": "What is Hannah's favourite food to eat out for dinner?",
-      "choice1": "Italian",
-      "choice2": "Vietnamese",
-      "choice3": "Mexican",
-      "choice4": "Korean",
-      "answer": 2
-    },
-    {
-      "question": "What animal did Hannah have as a pet while growing up?",
-      "choice1": "Cat",
-      "choice2": "Fish",
-      "choice3": "Snake",
-      "choice4": "Dog",
-      "answer": 4
-    },
-    {
-      "question": "Where was Hannah born?",
-      "choice1": "UK",
-      "choice2": "USA",
-      "choice3": "Uzbekistan",
-      "choice4": "Uruguay",
-      "answer": 1
-    },
-    {
-      "question": "What job has Hannah had the longest?",
-      "choice1": "Bank manager",
-      "choice2": "Sailor",
-      "choice3": "Teacher",
-      "choice4": "Waitress",
-      "answer": 3
-    },
-    {
-      "question": "What is Hannah studying?",
-      "choice1": "Medicine",
-      "choice2": "Software engineering",
-      "choice3": "Cooking",
-      "choice4": "Sewing",
-      "answer": 2
-    }
-  ];
+let questions = [];
+
+fetch(
+  'https://opentdb.com/api.php?amount=10&category=9&difficulty=easy&type=multiple'
+)
+  .then((res) => {
+      return res.json();
+  })
+  .then((loadedQuestions) => {
+      questions = loadedQuestions.results.map((loadedQuestion) => {
+          const formattedQuestion = {
+              question: loadedQuestion.question,
+          };
+
+          const answerChoices = [...loadedQuestion.incorrect_answers];
+          formattedQuestion.answer = Math.floor(Math.random() * 4) + 1;
+          answerChoices.splice(
+              formattedQuestion.answer - 1,
+              0,
+              loadedQuestion.correct_answer
+          );
+
+          answerChoices.forEach((choice, index) => {
+              formattedQuestion['choice' + (index + 1)] = choice;
+          });
+
+          return formattedQuestion;
+      });
+      startGame();
+  })
+  .catch((err) => {
+      console.error(err);
+  });
 
 // Constants
 const CORRECT_BONUS = 10;
@@ -69,12 +53,14 @@ startGame = () => {
     score = 0;
     availableQuestions = [...questions]; //spread operator
     getNewQuestion();
+    game.classList.remove("hidden");
+    loader.classList.add("hidden");
 };
 
 getNewQuestion = () => {
   if (availableQuestions.length === 0 || questionCounter >= MAX_QUESTIONS) {
     localStorage.setItem('mostRecentScore', score);
-    return window.location.assign("/end.html");
+    return window.location.assign("./end.html");
   }
 
     questionCounter++; // increase counter by one
@@ -124,4 +110,3 @@ incrementScore = num => {
   score +=num;
   scoreText.innerText = score;
 }
-startGame();
